@@ -33,3 +33,8 @@ export const handlegetlogiedinuserdata = (id) => {
 export const handlesendmessages = (receiverId, data) => {
     return HttpCliennt.post(`/message/send/${receiverId}`, data)
 }
+
+
+export const handleprogile = () => {
+    return HttpCliennt.get(`/profile`);
+}

@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
-import { handlegetlogiedinuserdata, handlelogin, handleSignup } from '../../apis/Apis';
+import { handlegetlogiedinuserdata, handlelogin, handleprogile, handleSignup } from '../../apis/Apis';
 
 // sing up  api
 export const AuthSingup = createAsyncThunk("auth/signup", async (data, thunkAPI) => {
@@ -37,6 +37,18 @@ export const handlelogidprofiledata = createAsyncThunk("/auth/profile", async (i
 })
 
 
+export const handleprogileslice = createAsyncThunk("auth/profile", async (_, thunkAPI) => {
+    try {
+        const response = await handleprogile();
+        console.log(response, 'reeeeeeeeee')
+        return response.data.data;
+    }
+    catch (error) {
+        return thunkAPI.rejectWithValue(error.message);
+    }
+})
+
+
 
 const initialState = {
     auth: {
@@ -56,6 +68,11 @@ const initialState = {
         profileloading: false,
         profileerror: null,
     },
+    logedinuser: {
+        logedinuserdata: {},
+        logedinuserloading: false,
+        logiedinusererror: null,
+    }
 }
 
 const AuthSlice = createSlice({
@@ -121,6 +138,19 @@ const AuthSlice = createSlice({
             .addCase(handlelogidprofiledata.rejected, (state, action) => {
                 state.profiledata.profileloading = false;
                 state.profiledata.profileerror = action.payload;
+            })
+
+            .addCase(handleprogileslice.pending, (state) => {
+                state.logedinuser.logedinuserloading = true;
+                state.logedinuser.logiedinusererror = null;
+            })
+            .addCase(handleprogileslice.fulfilled, (state, action) => {
+                state.logedinuser.logedinuserloading = false;
+                state.logedinuser.logedinuserdata = action.payload;
+            })
+            .addCase(handleprogileslice.rejected, (state, action) => {
+                state.logedinuser.logedinuserloading = false;
+                state.logedinuser.logiedinusererror = action.payload;
             })
     }
 })

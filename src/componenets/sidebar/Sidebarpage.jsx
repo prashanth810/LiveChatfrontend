@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import avatar from '../../../public/avatar.png';
 import { logoutUser } from '../../redux/slices/AuthSlice';
 import { LogOut } from "lucide-react";
@@ -30,13 +30,15 @@ const Sidebarpage = () => {
 
             {/* avatar */}
             <div className="flex items-center justify-between border-b border-gray-700 pb-8">
-                <div className='flex items-center gap-x-2'>
-                    <img src={avatar} className='rounded-full w-13 h-13 object-contain' />
-                    <div>
-                        <p className='text-sm'>Prashanth</p>
-                        <p className='text-xs'>Online</p>
+                <NavLink to={'myprofile'}>
+                    <div className='flex items-center gap-x-2'>
+                        <img src={avatar} className='rounded-full w-13 h-13 object-contain' />
+                        <div>
+                            <p className='text-sm'>Prashanth</p>
+                            <p className='text-xs'>Online</p>
+                        </div>
                     </div>
-                </div>
+                </NavLink>
 
                 <button className='hover:bg-gray-600 p-1 rounded-sm' onClick={handleLogout}>
                     <LogOut size={20} />

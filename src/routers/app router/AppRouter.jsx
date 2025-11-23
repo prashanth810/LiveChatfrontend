@@ -7,6 +7,7 @@ import Contactpage from '../../pages/contacts/Contactpage';
 import SingleChatpage from '../../pages/single chat/SingleChatpage';
 import { useSelector } from "react-redux";
 import Defaultpage from '../../pages/Default/Defaultpage';
+import Myprofile from '../../pages/my profile/Myprofile';
 
 const AppRouter = () => {
 
@@ -35,6 +36,7 @@ const AppRouter = () => {
                     <Route path="chats" element={<Chatpage />} />
                     <Route path="contacts" element={<Contactpage />} />
                     <Route path=":id" element={<SingleChatpage />} />
+                    <Route path="myprofile" element={<Myprofile />} />
                 </Route>
 
                 {/* CATCH-ALL */}
