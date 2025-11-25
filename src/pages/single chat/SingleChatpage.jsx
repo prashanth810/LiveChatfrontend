@@ -6,11 +6,14 @@ import { handlelogidprofiledata } from '../../redux/slices/AuthSlice';
 import avatar from '../../../public/avatar.png';
 import { Mic, Paperclip, Send, Smile, X } from 'lucide-react';
 import Loaderpage from '../../componenets/loader/Loaderpage';
+import { ConnectWs } from '../Ws';
 
 const SingleChatpage = () => {
     const { id } = useParams();
     const dispatch = useDispatch();
     const messageRef = useRef(null);
+
+    const socketref = useRef(null);
 
     const [starttyping, setStartTyping] = useState(false);
     const [form, setForm] = useState({
@@ -36,6 +39,11 @@ const SingleChatpage = () => {
     //     }
     // }, [singlechatdata])
 
+
+    useEffect(() => {
+        socketref.current = ConnectWs();
+    }, [])
+
     const formatTime = (timestamp) => {
         const date = new Date(timestamp);
         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -52,20 +60,19 @@ const SingleChatpage = () => {
         }
     }
 
-
-
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
-        // If user selected image
-        if (file.type.startsWith("image/")) {
-            setForm({ ...form, image: file, video: "" });
-        }
-        // If user selected video
-        else if (file.type.startsWith("video/")) {
-            setForm({ ...form, video: file, image: "" });
-        }
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onloadend = () => {
+            if (file.type.startsWith("image/")) {
+                setForm({ ...form, image: reader.result, video: "" });
+            } else if (file.type.startsWith("video/")) {
+                setForm({ ...form, video: reader.result, image: "" });
+            }
+        };
     };
 
 
@@ -80,8 +87,13 @@ const SingleChatpage = () => {
         if (!hasMedia) {
             dispatch(sendmessages({
                 receiverId: id,
-                data: { text: form.text },
+                data: {
+                    text: form.text,
+                    image: form.image,
+                    video: form.video
+                }
             }));
+
         }
 
         // If sending image or video
@@ -145,16 +157,42 @@ const SingleChatpage = () => {
                                 key={msg._id}
                                 className={`w-full flex ${id === msg.recieverId ? "justify-end" : "justify-start"}`}
                             >
-                                <div
-                                    className={`max-w-xs p-2 rounded-lg text-xs tracking-wider ${isSender
-                                        ? "bg-gray-700 text-white"
-                                        : "bg-[#17495E] text-white"
-                                        }`} > {msg.text}
+                                {msg.text ? (
+                                    <div
+                                        className={`max-w-xs p-2 rounded-lg text-xs tracking-wider ${isSender
+                                            ? "bg-gray-700 text-white"
+                                            : "bg-[#17495E] text-white"
+                                            }`} > {msg.text}
 
-                                    <p className="text-[8px] text-gray-300 mt-1 text-right">
-                                        {formatTime(msg.createdAt)}
-                                    </p>
-                                </div>
+                                        <p className="text-[8px] text-gray-300 mt-1 text-right">
+                                            {formatTime(msg.createdAt)}
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div
+                                        className={`max-w-xs p-2 rounded-lg text-xs tracking-wider ${isSender
+                                            ? "bg-gray-700 text-white"
+                                            : "bg-[#17495E] text-white"
+                                            }`} >
+                                        <img src={msg.image} className='w-52 object-cover' />
+
+                                        <p className="text-[8px] text-gray-300 mt-1 text-right">
+                                            {formatTime(msg.createdAt)}
+                                        </p>
+                                    </div>
+                                ) ? (
+                                    <div
+                                        className={`max-w-xs p-2 rounded-lg text-xs tracking-wider ${isSender
+                                            ? "bg-gray-700 text-white"
+                                            : "bg-[#17495E] text-white"
+                                            }`} >
+                                        <video src={msg.video} controls className='w-52 object-cover' />
+
+                                        <p className="text-[8px] text-gray-300 mt-1 text-right">
+                                            {formatTime(msg.createdAt)}
+                                        </p>
+                                    </div>
+                                ) : ("")}
                                 <div ref={messageRef} />
                             </div>
                         );
@@ -182,7 +220,7 @@ const SingleChatpage = () => {
                     {form.image && (
                         <div className="relative w-fit border border-[#ccc]">
                             <img
-                                src={URL.createObjectURL(form.image)}
+                                src={form.image}
                                 className="max-h-55 max-w-[80vw] rounded-lg object-cover"
                             />
                             <button
@@ -198,7 +236,7 @@ const SingleChatpage = () => {
                     {form.video && (
                         <div className="relative w-fit">
                             <video
-                                src={URL.createObjectURL(form.video)}
+                                src={form.video}
                                 controls
                                 className="max-h-40 max-w-[80vw] rounded-lg"
                             />
@@ -260,3 +298,52 @@ const SingleChatpage = () => {
 }
 
 export default SingleChatpage
+
+
+// {
+//     Array.isArray(singlechatdata) && singlechatdata.length > 0 ? (
+//         singlechatdata.map((msg) => {
+//             const loggedUserId = profile?._id;
+//             const isSender = msg.senderId === loggedUserId;
+
+//             return (
+//                 <div
+//                     key={msg._id}
+//                     className={`w-full flex ${isSender ? "justify-end" : "justify-start"}`}
+//                 >
+//                     <div
+//                         className={`max-w-xs p-2 rounded-lg text-xs tracking-wider space-y-1 ${isSender ? "bg-gray-700 text-white" : "bg-[#17495E] text-white"
+//                             }`}
+//                     >
+
+//                         {/* TEXT / IMAGE / VIDEO */}
+//                         {msg.text && <p className="break-words">{msg.text}</p>}
+
+//                         {msg.image && (
+//                             <img
+//                                 src={msg.image}
+//                                 alt="sent-img"
+//                                 className="max-w-[180px] rounded-lg"
+//                             />
+//                         )}
+
+//                         {msg.video && (
+//                             <video
+//                                 src={msg.video}
+//                                 className="max-w-[200px] rounded-lg"
+//                                 controls
+//                             />
+//                         )}
+
+//                         {/* TIME */}
+//                         <p className="text-[8px] text-gray-300 mt-1 text-right">
+//                             {formatTime(msg.createdAt)}
+//                         </p>
+//                     </div>
+//                 </div>
+//             );
+//         })
+//     ) : (
+//     <p>No Chat available...</p>
+// )
+// }

@@ -40,7 +40,6 @@ export const handlelogidprofiledata = createAsyncThunk("/auth/profile", async (i
 export const handleprogileslice = createAsyncThunk("auth/profile", async (_, thunkAPI) => {
     try {
         const response = await handleprogile();
-        console.log(response, 'reeeeeeeeee')
         return response.data.data;
     }
     catch (error) {
