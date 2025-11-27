@@ -10,13 +10,17 @@ export const ConnectWs = () => {
         console.log("socket connected:", socket.id);
     });
 
+    socket.on("wellcome", (socket, id) => {
+        console.log(socket, id);
+    })
+
     socket.on("connect_error", (err) => {
         console.log("socket error:", err.message);
     });
 
-    socket.on("disconnected", () => {
-        console.log("socket disconnected ", socket.id);
-    })
+    // socket.on("disconnected", () => {
+    //     console.log("socket disconnected ", socket.id);
+    // })
 
     return socket;
 };

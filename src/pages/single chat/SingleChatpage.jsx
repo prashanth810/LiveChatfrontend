@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux';
-import { NavLink, useParams } from 'react-router-dom'
+import { data, NavLink, useParams } from 'react-router-dom';
 import { getchatinfo, getchatmessagesbyid, sendmessages } from '../../redux/slices/ChatSlice';
 import { handlelogidprofiledata } from '../../redux/slices/AuthSlice';
 import avatar from '../../../public/avatar.png';
@@ -8,57 +8,86 @@ import { Mic, Paperclip, Send, Smile, X } from 'lucide-react';
 import Loaderpage from '../../componenets/loader/Loaderpage';
 import { ConnectWs } from '../Ws';
 
+const formatTime = (timestamp) => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
+
+
 const SingleChatpage = () => {
+
     const { id } = useParams();
     const dispatch = useDispatch();
     const messageRef = useRef(null);
 
-    const socketref = useRef(null);
+    const socketRef = useRef(null);   // ⭐ store socket here
 
     const [starttyping, setStartTyping] = useState(false);
+
     const [form, setForm] = useState({
         text: "",
         image: "",
         video: "",
     });
+    const [message, setMessage] = useState([]);
 
-    const { singlechatdata, singleloading, sngleerror } = useSelector((state) => state.chat.singlechat);
-    const { profile, profileloading, profileerror } = useSelector((state) => state.Auth.profiledata);
+    const { singlechatdata } = useSelector((state) => state.chat.singlechat);
+    const { profile } = useSelector((state) => state.Auth.profiledata);
 
+
+    // ⭐ CONNECT socket ONCE
+    useEffect(() => {
+        socketRef.current = ConnectWs();
+
+        return () => {
+            socketRef.current?.disconnect();
+        };
+    }, []);
+
+
+    // fetch chats
     useEffect(() => {
         dispatch(getchatmessagesbyid(id));
-    }, [id]);
-
-    useEffect(() => {
         dispatch(handlelogidprofiledata(id));
     }, [id]);
 
-    // useEffect(() => {
-    //     if (messageRef.current) {
-    //         messageRef.current.scrollIntoView({ behavior: "smooth" });
-    //     }
-    // }, [singlechatdata])
+
+    useEffect(() => {
+        if (!socketRef.current) return;
+        const socket = socketRef.current;
+
+        socket.on("recieve-message", (msg) => {
+            console.log("REALTIME:", msg);
+
+            const isForThisChat =
+                (msg.senderId === profile?._id && msg.receiverId === id) ||
+                (msg.receiverId === profile?._id && msg.senderId === id);
+
+            if (isForThisChat) {
+                // ✅ Directly update UI state
+                setMessage(prev => [...prev, msg]);
+                console.log(message, 'mmmmmmmmmmmmmmmmmmmmmmmm')
+            }
+        });
+
+        return () => socket.off("recieve-message");
+    }, [id, profile?._id]);
+
+
 
 
     useEffect(() => {
-        socketref.current = ConnectWs();
-    }, [])
+        if (singlechatdata) {
+            setMessage(singlechatdata);
+        }
+    }, [singlechatdata]);
 
-    const formatTime = (timestamp) => {
-        const date = new Date(timestamp);
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    };
 
     const handlechange = (e) => {
         const { name, value } = e.target;
         setForm({ ...form, [name]: value });
-
-        if (value.trim() === "") {
-            setStartTyping(false);
-        } else {
-            setStartTyping(true);
-        }
-    }
+        setStartTyping(value.trim() !== "");
+    };
 
     const handleFileChange = (e) => {
         const file = e.target.files[0];
@@ -76,14 +105,11 @@ const SingleChatpage = () => {
     };
 
 
-
-
-
-    // handle send messages 
+    // ⭐ Send message (API + SOCKET)
     const handlesendmaessagesreciever = () => {
         const hasMedia = form.image || form.video;
 
-        // If sending only text
+        // send to backend
         if (!hasMedia) {
             dispatch(sendmessages({
                 receiverId: id,
@@ -93,11 +119,7 @@ const SingleChatpage = () => {
                     video: form.video
                 }
             }));
-
-        }
-
-        // If sending image or video
-        else {
+        } else {
             const payload = new FormData();
             payload.append("text", form.text);
             if (form.image) payload.append("image", form.image);
@@ -105,19 +127,22 @@ const SingleChatpage = () => {
 
             dispatch(sendmessages({
                 receiverId: id,
-                data: payload,
+                data: payload
             }));
         }
+
+        // ⭐ Real-time socket message
+        socketRef.current.emit("message", {
+            senderId: profile?._id,
+            receiverId: id,
+            text: form.text,
+            image: form.image,
+            video: form.video
+        });
 
         dispatch(getchatinfo());
         setForm({ text: "", image: "", video: "" });
     };
-
-
-
-    // if (singleloading || profileloading) {
-    //     return <Loaderpage />
-    // }
 
 
 
@@ -145,7 +170,7 @@ const SingleChatpage = () => {
             ) : "no profile available..."}
 
             {/* CHAT MESSAGES */}
-            <div className="p-3 flex flex-col gap-y-3 h-[33rem] overflow-y-auto sidebar" style={{ scrollbarWidth: "thin" }}>
+            <div className="p-3 flex flex-col gap-y-3 h-[33rem] overflow-y-auto sidebar">
 
                 {Array.isArray(singlechatdata) && singlechatdata.length > 0 ? (
                     singlechatdata.map((msg) => {
@@ -155,45 +180,46 @@ const SingleChatpage = () => {
                         return (
                             <div
                                 key={msg._id}
-                                className={`w-full flex ${id === msg.recieverId ? "justify-end" : "justify-start"}`}
+                                className={`w-full flex ${isSender ? "justify-start" : "justify-end"}`}
                             >
-                                {msg.text ? (
-                                    <div
-                                        className={`max-w-xs p-2 rounded-lg text-xs tracking-wider ${isSender
-                                            ? "bg-gray-700 text-white"
-                                            : "bg-[#17495E] text-white"
-                                            }`} > {msg.text}
+                                {msg.text && (
+                                    <div className={`max-w-xs p-2 rounded-lg text-xs tracking-wider ${isSender
+                                        ? "bg-gray-700 text-white"
+                                        : "bg-[#17495E] text-white"
+                                        }`} >
+                                        {msg.text}
 
                                         <p className="text-[8px] text-gray-300 mt-1 text-right">
                                             {formatTime(msg.createdAt)}
                                         </p>
                                     </div>
-                                ) : (
-                                    <div
-                                        className={`max-w-xs p-2 rounded-lg text-xs tracking-wider ${isSender
-                                            ? "bg-gray-700 text-white"
-                                            : "bg-[#17495E] text-white"
-                                            }`} >
+                                )}
+
+                                {msg.image && (
+                                    <div className={`max-w-xs p-2 rounded-lg text-xs tracking-wider ${isSender
+                                        ? "bg-gray-700 text-white"
+                                        : "bg-[#17495E] text-white"
+                                        }`} >
                                         <img src={msg.image} className='w-52 object-cover' />
-
                                         <p className="text-[8px] text-gray-300 mt-1 text-right">
                                             {formatTime(msg.createdAt)}
                                         </p>
                                     </div>
-                                ) ? (
-                                    <div
-                                        className={`max-w-xs p-2 rounded-lg text-xs tracking-wider ${isSender
-                                            ? "bg-gray-700 text-white"
-                                            : "bg-[#17495E] text-white"
-                                            }`} >
+                                )}
+
+                                {msg.video && (
+                                    <div className={`max-w-xs p-2 rounded-lg text-xs tracking-wider ${isSender
+                                        ? "bg-gray-700 text-white"
+                                        : "bg-[#17495E] text-white"
+                                        }`} >
                                         <video src={msg.video} controls className='w-52 object-cover' />
-
                                         <p className="text-[8px] text-gray-300 mt-1 text-right">
                                             {formatTime(msg.createdAt)}
                                         </p>
                                     </div>
-                                ) : ("")}
-                                <div ref={messageRef} />
+                                )}
+
+                                <div ref={messageRef}></div>
                             </div>
                         );
                     })
@@ -277,7 +303,7 @@ const SingleChatpage = () => {
                 />
 
                 {/* Send / Mic Button */}
-                {starttyping ? (
+                {form.image || form.video || starttyping ? (
                     <button className='cursor-pointer' onClick={handlesendmaessagesreciever}>
                         <Send size={17} />
                     </button>
@@ -293,57 +319,7 @@ const SingleChatpage = () => {
 
 
         </section>
+    );
+};
 
-    )
-}
-
-export default SingleChatpage
-
-
-// {
-//     Array.isArray(singlechatdata) && singlechatdata.length > 0 ? (
-//         singlechatdata.map((msg) => {
-//             const loggedUserId = profile?._id;
-//             const isSender = msg.senderId === loggedUserId;
-
-//             return (
-//                 <div
-//                     key={msg._id}
-//                     className={`w-full flex ${isSender ? "justify-end" : "justify-start"}`}
-//                 >
-//                     <div
-//                         className={`max-w-xs p-2 rounded-lg text-xs tracking-wider space-y-1 ${isSender ? "bg-gray-700 text-white" : "bg-[#17495E] text-white"
-//                             }`}
-//                     >
-
-//                         {/* TEXT / IMAGE / VIDEO */}
-//                         {msg.text && <p className="break-words">{msg.text}</p>}
-
-//                         {msg.image && (
-//                             <img
-//                                 src={msg.image}
-//                                 alt="sent-img"
-//                                 className="max-w-[180px] rounded-lg"
-//                             />
-//                         )}
-
-//                         {msg.video && (
-//                             <video
-//                                 src={msg.video}
-//                                 className="max-w-[200px] rounded-lg"
-//                                 controls
-//                             />
-//                         )}
-
-//                         {/* TIME */}
-//                         <p className="text-[8px] text-gray-300 mt-1 text-right">
-//                             {formatTime(msg.createdAt)}
-//                         </p>
-//                     </div>
-//                 </div>
-//             );
-//         })
-//     ) : (
-//     <p>No Chat available...</p>
-// )
-// }
+export default SingleChatpage;

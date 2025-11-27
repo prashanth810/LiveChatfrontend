@@ -1,8 +1,25 @@
 import React from 'react';
 import AppRouter from './routers/app router/AppRouter';
 import { Toaster } from 'react-hot-toast';
+import { ConnectWs } from './pages/Ws';
+import { useEffect } from 'react';
+import { useRef } from 'react';
+
 
 const App = () => {
+  const socketref = useRef(null);
+
+
+
+  useEffect(() => {
+    socketref.current = ConnectWs();
+
+    return () => {
+      socketref.current?.disconnect();
+    };
+  }, []);
+
+
   return (
     <section className='min-h-screen bg-slate-900 relative flex items-center justify-center p-1 overflow-hidden'>
       <div className='absolute inset-0 bg-[linerar-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)]  ' />
