@@ -3,13 +3,16 @@ import Loaderpage from '../../componenets/loader/Loaderpage';
 import { logoutUser } from '../../redux/slices/AuthSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { getchatinfo } from '../../redux/slices/ChatSlice';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import avatar from '../../../public/avatar.png'
 
 
 const Chatpage = () => {
     const [state, setState] = useState(false);
     const dispatch = useDispatch();
+    const location = useLocation();
+    const activeChatId = location.pathname.split("/").pop();
+
 
 
     const { chatdata, chatloading, chaterror } = useSelector((state) => state.chat.chatinfo)
@@ -22,14 +25,18 @@ const Chatpage = () => {
 
     return (
         <section className='text-white'>
-            <div className="flex flex-col gap-y-2">
+            <div className="flex flex-col gap-y-2 h-[27rem] overflow-auto"
+                style={{ scrollbarWidth: "none" }} >
                 {chatdata && chatdata.length > 0 ? (
                     chatdata.map((user) => (
                         <NavLink key={user._id} to={`/chat/${user._id}`}>
 
                             <div
-                                className="flex items-center gap-3 p-2 rounded-lg hover:bg-[#224157] cursor-pointer transition"
-                            >
+                                className={`flex items-center gap-x-2 p-2 rounded-lg hover:bg-[#224157] cursor-pointer transition 
+                                      ${activeChatId === user._id
+                                        ? "bg-[#1a3548]" //  border border-cyan-800
+                                        : "hover:bg-[#224157]"
+                                    }`} >
                                 {/* Profile Image */}
                                 <img
                                     src={user.profile ? user.profile : avatar}

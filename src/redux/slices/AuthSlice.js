@@ -80,14 +80,14 @@ const AuthSlice = createSlice({
 
     reducers: {
         logoutUser: (state) => {
-            // clear redux store
             state.auth.isAuthenticated = false;
             state.auth.authdata = {};
             state.authlogin.logindata = {};
 
-            // clear cookie
-            document.cookie = "token= expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            // delete cookie
+            document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
         }
+
     },
 
     extraReducers: (builder) => {
@@ -101,7 +101,7 @@ const AuthSlice = createSlice({
                 state.auth.authloading = false;
                 state.auth.authdata = action.payload;
                 // ✅ user is now authenticated
-                // state.auth.isAuthenticated = true;
+                state.auth.isAuthenticated = true;
             })
             .addCase(AuthSingup.rejected, (state, action) => {
                 state.auth.authloading = false;
@@ -146,6 +146,7 @@ const AuthSlice = createSlice({
             .addCase(handleprogileslice.fulfilled, (state, action) => {
                 state.logedinuser.logedinuserloading = false;
                 state.logedinuser.logedinuserdata = action.payload;
+                state.auth.isAuthenticated = true;
             })
             .addCase(handleprogileslice.rejected, (state, action) => {
                 state.logedinuser.logedinuserloading = false;

@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux';
-import { data, NavLink, useParams } from 'react-router-dom';
+import { NavLink, useParams } from 'react-router-dom';
 import { getchatinfo, getchatmessagesbyid, sendmessages } from '../../redux/slices/ChatSlice';
 import { handlelogidprofiledata } from '../../redux/slices/AuthSlice';
 import avatar from '../../../public/avatar.png';
-import { Mic, Paperclip, Send, Smile, X } from 'lucide-react';
+import { MessageCircle, Mic, Paperclip, Send, Smile, X } from 'lucide-react';
 import Loaderpage from '../../componenets/loader/Loaderpage';
 import { ConnectWs } from '../Ws';
 
@@ -59,15 +59,15 @@ const SingleChatpage = () => {
         socket.on("recieve-message", (msg) => {
             console.log("REALTIME:", msg);
 
-            const isForThisChat =
-                (msg.senderId === profile?._id && msg.receiverId === id) ||
-                (msg.receiverId === profile?._id && msg.senderId === id);
+            // const isForThisChat =
+            //     (msg.senderId === profile?._id && msg.receiverId === id) ||
+            //     (msg.receiverId === profile?._id && msg.senderId === id);
 
-            if (isForThisChat) {
-                // ✅ Directly update UI state
-                setMessage(prev => [...prev, msg]);
-                console.log(message, 'mmmmmmmmmmmmmmmmmmmmmmmm')
-            }
+            // if (isForThisChat) {
+            // ✅ Directly update UI state
+            setMessage(prev => [...prev, msg]);
+            console.log(message, 'mmmmmmmmmmmmmmmmmmmmmmmm')
+            // }
         });
 
         return () => socket.off("recieve-message");
@@ -81,6 +81,13 @@ const SingleChatpage = () => {
             setMessage(singlechatdata);
         }
     }, [singlechatdata]);
+
+    // useEffect(() => {
+    //     if (messageRef.current) {
+    //         messageRef.current.scrollIntoView({ behavior: "smooth" });
+    //     }
+    // }, [message]);
+
 
 
     const handlechange = (e) => {
@@ -144,6 +151,31 @@ const SingleChatpage = () => {
         setForm({ text: "", image: "", video: "" });
     };
 
+    // quick send messages 
+    const sendQuickMessage = (text) => {
+        // update UI instantly
+        setMessage(prev => [...prev, {
+            senderId: profile?._id,
+            receiverId: id,
+            text,
+            createdAt: new Date().toISOString()
+        }]);
+
+        // send to backend
+        dispatch(sendmessages({
+            receiverId: id,
+            data: { text }
+        }));
+
+        // send to socket
+        socketRef.current.emit("message", {
+            senderId: profile?._id,
+            receiverId: id,
+            text
+        });
+    };
+
+
 
 
     return (
@@ -170,17 +202,18 @@ const SingleChatpage = () => {
             ) : "no profile available..."}
 
             {/* CHAT MESSAGES */}
-            <div className="p-3 flex flex-col gap-y-3 h-[33rem] overflow-y-auto sidebar">
+            <div className="p-3 flex flex-col gap-y-3 h-[33rem] overflow-y-auto"
+                style={{ scrollbarWidth: "none" }} >
 
-                {Array.isArray(singlechatdata) && singlechatdata.length > 0 ? (
-                    singlechatdata.map((msg) => {
+                {Array.isArray(message) && message.length > 0 ? (
+                    message.map((msg, i) => {
                         const loggedUserId = profile?._id;
-                        const isSender = msg.senderId === loggedUserId;
+                        const isSender = msg.senderId === profile?._id;
 
                         return (
                             <div
-                                key={msg._id}
-                                className={`w-full flex ${isSender ? "justify-start" : "justify-end"}`}
+                                key={i || msg._id}
+                                className={`w-full flex ${loggedUserId === msg.senderId ? "justify-start" : "justify-end"}`}
                             >
                                 {msg.text && (
                                     <div className={`max-w-xs p-2 rounded-lg text-xs tracking-wider ${isSender
@@ -224,7 +257,44 @@ const SingleChatpage = () => {
                         );
                     })
                 ) : (
-                    <p>No Chat available...</p>
+                    <div className='h-52 flex flex-col items-center justify-center'>
+                        <div className="flex flex-col items-center justify-center text-white pt-38 ">
+
+                            {/* Icon Box */}
+                            <div className="bg-[#1A3A4E] w-18 h-18 rounded-full flex items-center justify-center mb-4">
+                                <MessageCircle size={33} className='text-cyan-500' />
+                            </div>
+
+                            {/* Text */}
+                            <p className="text-lg font-semibold mb-1"> Start Your Converasation with
+                                <span className='text-cyan-400 text-xl capitalize'> {profile.fullName} </span> </p>
+                            <p className="text-sm text-gray-300"> This is the beginning of your conversation , Send a message to start </p>
+
+                            <div className='flex items-center gap-x-3 py-5'>
+                                <button
+                                    onClick={() => sendQuickMessage("Hello 👋")}
+                                    className='bg-gray-800 py-2 px-3 text-sm rounded-full hover:bg-cyan-900 transition-all duration-300 cursor-pointer'
+                                >
+                                    👋 Say Hello
+                                </button>
+
+                                <button
+                                    onClick={() => sendQuickMessage("How are you? 🤝")}
+                                    className='bg-gray-800 py-2 px-4 text-sm rounded-full hover:bg-cyan-900 transition-all duration-300 cursor-pointer'
+                                >
+                                    🤝 How are you ?
+                                </button>
+
+                                <button
+                                    onClick={() => sendQuickMessage("Shall we meet soon? 🧑‍🤝‍🧑")}
+                                    className='bg-gray-800 py-2 px-4 text-sm rounded-full hover:bg-cyan-900 transition-all duration-300 cursor-pointer'
+                                >
+                                    🧑‍🤝‍🧑 Meet up soon ?
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
                 )}
 
             </div>
@@ -280,40 +350,44 @@ const SingleChatpage = () => {
 
 
 
-            <div className="border border-[#ccc] fixed bottom-8 left-1/2 xl:-translate-x-1/3 lg:-translate-x-1/3 md:-translate-x-1/3 -translate-x-1/2 2xl:w-[44%] xl:w-[58%] lg:w-[65%] md:w-[70%] w-[80%] bg-[#102030] 
-    flex items-center gap-3 px-3 py-2 rounded-lg">
+            {message.length > 0 ? (
+                <div className="border border-[#1a3548] fixed bottom-8 left-1/2 xl:-translate-x-1/3 lg:-translate-x-1/3 md:-translate-x-1/3 -translate-x-1/2 2xl:w-[44%] xl:w-[58%] lg:w-[65%] md:w-[70%] w-[80%] bg-[#102030] 
+    flex items-center gap-4 px-3 py-3 rounded-lg">
 
-                {/* Emoji Icon */}
-                <button><Smile size={17} className="text-white" /></button>
+                    {/* Emoji Icon */}
+                    <button className='cursor-pointer'><Smile size={17} className="text-white hover:text-cyan-600 transition-all duration-300" /></button>
 
-                {/*  File Upload Button */}
-                <label className='cursor-pointer'>
-                    <Paperclip size={17} />
-                    <input type='file' accept='/*,/*' className='hidden' onChange={handleFileChange} />
-                </label>
+                    {/*  File Upload Button */}
+                    <label className='cursor-pointer hover:text-cyan-600 transition-all duration-300'>
+                        <Paperclip size={17} />
+                        <input type='file' accept='/*,/*' className='hidden' onChange={handleFileChange} />
+                    </label>
 
-                {/* Text Input */}
-                <textarea
-                    name='text'
-                    placeholder='Type your message ...'
-                    value={form.text}
-                    onChange={handlechange}
-                    className="w-full text-sm outline-none resize-none overflow-auto sidebar leading-relaxed h-6 bg-transparent text-white"
-                    rows="1"
-                />
+                    {/* Text Input */}
+                    <textarea
+                        name='text'
+                        placeholder='Type your message ...'
+                        value={form.text}
+                        onChange={handlechange}
+                        className="w-full text-sm outline-none resize-none overflow-auto sidebar leading-relaxed h-6 bg-transparent text-white"
+                        rows="1"
+                    />
 
-                {/* Send / Mic Button */}
-                {form.image || form.video || starttyping ? (
-                    <button className='cursor-pointer' onClick={handlesendmaessagesreciever}>
-                        <Send size={17} />
-                    </button>
-                ) : (
-                    <button className='outline-none cursor-pointer'>
-                        <Mic size={17} />
-                    </button>
-                )}
+                    {/* Send / Mic Button */}
+                    {form.image || form.video || starttyping ? (
+                        <button className='cursor-pointer' onClick={handlesendmaessagesreciever}>
+                            <Send size={17} />
+                        </button>
+                    ) : (
+                        <button className='outline-none cursor-pointer'>
+                            <Mic size={17} className='hover:text-cyan-600 transition-all duration-300' />
+                        </button>
+                    )}
 
-            </div>
+                </div>
+            ) : (
+                null
+            )}
 
 
 

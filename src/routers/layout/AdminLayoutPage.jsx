@@ -5,7 +5,7 @@ import Sidebarpage from '../../componenets/sidebar/Sidebarpage';
 const AdminLayoutPage = () => {
     return (
         <section>
-            <div className="w-full h-[95vh] overflow-y-hidden sidebar my-2 max-w-7xl mx-auto shadow-xl flex flex-col md:flex-row bg-[#0f172a] gap-x-1 rounded-lg border border-red-500">
+            <div className="w-full h-[95vh] overflow-y-hidden sidebar my-2 max-w-7xl mx-auto shadow-xl flex flex-col md:flex-row bg-[#0f172a] gap-x-1 rounded-lg border border-blue-500">
 
                 {/* LEFT SIDE = Sidebar */}
                 <div className="w-[25%] hidden md:block">

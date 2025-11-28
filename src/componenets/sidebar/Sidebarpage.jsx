@@ -1,8 +1,8 @@
-import { useState } from "react";
-import { useDispatch } from "react-redux";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { NavLink, useNavigate } from "react-router-dom";
 import avatar from '../../../public/avatar.png';
-import { logoutUser } from '../../redux/slices/AuthSlice';
+import { handleprogileslice, logoutUser } from '../../redux/slices/AuthSlice';
 import { LogOut } from "lucide-react";
 import Contactpage from "../../pages/contacts/Contactpage";   // ADD THIS
 import Chatpage from "../../pages/chat page/Chatpage";       // ADD THIS
@@ -11,6 +11,14 @@ const Sidebarpage = () => {
     const [activebtn, setActivebtn] = useState("chat");
     const dispatch = useDispatch();
     const navigate = useNavigate();
+
+    const { logedinuserdata, logedinuserloading, logiedinusererror } = useSelector((state) => state.Auth.logedinuser);
+
+    useEffect(() => {
+        dispatch(handleprogileslice());
+    }, []);
+
+    console.log(logedinuserdata, 'sidebar form dataaaaa')
 
     const handleChats = () => {
         setActivebtn("chat");
@@ -34,7 +42,7 @@ const Sidebarpage = () => {
                     <div className='flex items-center gap-x-2'>
                         <img src={avatar} className='rounded-full w-13 h-13 object-contain' />
                         <div>
-                            <p className='text-sm'>Prashanth</p>
+                            <p className='text-sm'>{logedinuserdata.fullName}</p>
                             <p className='text-xs'>Online</p>
                         </div>
                     </div>

@@ -3,7 +3,8 @@ import React from 'react';
 
 const Defaultpage = () => {
     return (
-        <div className="flex flex-col items-center justify-center text-white p-10 ">
+        <div className="flex flex-col items-center justify-center text-white p-10 h-[40rem] overflow-auto"
+            style={{ scrollbarWidth: "none" }}>
 
             {/* Icon Box */}
             <div className="bg-[#1A3A4E] w-20 h-20 rounded-full flex items-center justify-center mb-4">

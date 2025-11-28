@@ -28,7 +28,8 @@ const Contactpage = () => {
             <p className="text-sm text-gray-400 mb-3">Contacts</p>
 
             {/* LIST */}
-            <div className="flex flex-col gap-y-2">
+            <div className="flex flex-col gap-y-2 h-[27rem] overflow-auto"
+                style={{ scrollbarWidth: "none" }} >
                 {contactdata && contactdata.length > 0 ? (
                     contactdata.map((user) => (
                         <NavLink key={user._id} to={`/chat/${user._id}`}>
