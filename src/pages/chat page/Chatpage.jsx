@@ -34,7 +34,7 @@ const Chatpage = () => {
                             className="flex items-center gap-x-2 p-4 rounded bg-[#1d384b] cursor-pointer transition animate-pulse"
                         >
                             {/* img circle */}
-                            <div className="bg-[#1f415b] h-10 w-10 rounded-full animate-pulse" />
+                            <div className="bg-[#1f415b] h-10 w-13 rounded-full animate-pulse" />
 
                             {/* Name + Email */}
                             <div className="flex flex-col gap-2 w-full">
