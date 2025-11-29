@@ -89,7 +89,6 @@ const SingleChatpage = () => {
     // }, [message]);
 
 
-
     const handlechange = (e) => {
         const { name, value } = e.target;
         setForm({ ...form, [name]: value });
@@ -174,7 +173,6 @@ const SingleChatpage = () => {
             text
         });
     };
-
 
 
 
