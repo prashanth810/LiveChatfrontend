@@ -5,7 +5,7 @@ let socket = null;
 // ⭐ Create socket
 export const ConnectWs = () => {
     if (!socket) {
-        socket = io("http://localhost:8010", {
+        socket = io("https://live-chat-application-22b5.onrender.com/", {
             transports: ["websocket"],
             withCredentials: true
         });
