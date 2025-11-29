@@ -13,6 +13,9 @@ const AppRouter = () => {
 
     const { isAuthenticated } = useSelector((state) => state.Auth.auth);
 
+    const storedToken = sessionStorage.getItem("token");
+    const loggedIn = isAuthenticated || storedToken;
+
     return (
         <section>
             <Routes>
@@ -20,27 +23,24 @@ const AppRouter = () => {
                 {/* LOGIN PAGE */}
                 <Route
                     path="/login"
-                    element={!isAuthenticated ? <Authpage /> : <Navigate to="/chat" />}
+                    element={!loggedIn ? <Authpage /> : <Navigate to="/chat" />}
                 />
 
-                {/* PROTECTED CHAT LAYOUT */}
+                {/* PROTECTED ROUTES */}
                 <Route
                     path="/chat"
-                    element={isAuthenticated ? <AdminLayoutPage /> : <Navigate to="/login" />}
+                    element={loggedIn ? <AdminLayoutPage /> : <Navigate to="/login" />}
                 >
 
-                    {/* DEFAULT RIGHT SIDE (NO REDIRECT) */}
                     <Route index element={<Defaultpage />} />
-
-                    {/* RIGHT SIDE ROUTES */}
                     <Route path="chats" element={<Chatpage />} />
                     <Route path="contacts" element={<Contactpage />} />
                     <Route path=":id" element={<SingleChatpage />} />
                     <Route path="myprofile" element={<Myprofile />} />
                 </Route>
 
-                {/* CATCH-ALL */}
-                <Route path="*" element={<Navigate to="/chat" />} />
+                {/* CATCH ALL */}
+                <Route path="*" element={<Navigate to={loggedIn ? "/chat" : "/login"} />} />
 
             </Routes>
         </section>
