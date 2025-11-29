@@ -61,6 +61,7 @@ const initialState = {
         loginloading: false,
         loginerror: null,
         isAuthenticated: false,
+        token: null,
     },
     profiledata: {
         profile: {},
@@ -83,6 +84,7 @@ const AuthSlice = createSlice({
             state.auth.isAuthenticated = false;
             state.auth.authdata = {};
             state.authlogin.logindata = {};
+            sessionStorage.removeItem('token');
 
             // delete cookie
             document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
@@ -118,6 +120,7 @@ const AuthSlice = createSlice({
                 // is login is true 
                 state.auth.isAuthenticated = true;
                 state.authlogin.logindata = action.payload;
+                sessionStorage.setItem('token', action.payload.token);
 
             })
             .addCase(Authlogin.rejected, (state, action) => {

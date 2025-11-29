@@ -11,7 +11,7 @@ const HttpClient = axios.create({
 // Add interceptor to attach token from localStorage if needed
 HttpClient.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem('token'); // or however you store it
+        const token = sessionStorage.getItem('token'); // or however you store it
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
