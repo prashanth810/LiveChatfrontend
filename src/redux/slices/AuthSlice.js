@@ -1,60 +1,73 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import { handlegetlogiedinuserdata, handlelogin, handleprogile, handleSignup } from '../../apis/Apis';
 
-// sing up  api
-export const AuthSingup = createAsyncThunk("auth/signup", async (data, thunkAPI) => {
-    try {
-        const response = await handleSignup(data);
-        return response.data;
+// ------------------------- SIGNUP -------------------------
+export const AuthSingup = createAsyncThunk(
+    "auth/signup",
+    async (data, thunkAPI) => {
+        try {
+            const res = await handleSignup(data);
+            return res.data;
+        } catch (err) {
+            return thunkAPI.rejectWithValue(
+                err.response?.data?.message || "Failed signup !!!"
+            );
+        }
     }
-    catch (error) {
-        return thunkAPI.rejectWithValue(error.message || "Failed sing up !!!");
+);
+
+// ------------------------- LOGIN -------------------------
+export const Authlogin = createAsyncThunk(
+    "auth/login",
+    async (data, thunkAPI) => {
+        try {
+            const res = await handlelogin(data);
+            return res.data;
+        } catch (err) {
+            return thunkAPI.rejectWithValue(
+                err.response?.data?.message || "Login failed"
+            );
+        }
     }
-})
+);
 
-
-// login api
-export const Authlogin = createAsyncThunk("auth/login", async (data, thunkAPI) => {
-    try {
-        const response = await handlelogin(data);
-        return response.data;
+// ------------------------- PROFILE -------------------------
+export const handlelogidprofiledata = createAsyncThunk(
+    "/auth/profile",
+    async (id, thunkAPI) => {
+        try {
+            const res = await handlegetlogiedinuserdata(id);
+            return res.data.data;
+        } catch (err) {
+            return thunkAPI.rejectWithValue(
+                err.response?.data?.message || err.message
+            );
+        }
     }
-    catch (error) {
-        return thunkAPI.rejectWithValue(error.message);
+);
+
+export const handleprogileslice = createAsyncThunk(
+    "auth/profile",
+    async (_, thunkAPI) => {
+        try {
+            const res = await handleprogile();
+            return res.data.data;
+        } catch (err) {
+            return thunkAPI.rejectWithValue(
+                err.response?.data?.message || err.message
+            );
+        }
     }
-})
+);
 
 
-// logid in user data 
-export const handlelogidprofiledata = createAsyncThunk("/auth/profile", async (id, thunkAPI) => {
-    try {
-        const response = await handlegetlogiedinuserdata(id);
-        return response.data.data;
-    }
-    catch (err) {
-        return thunkAPI.rejectWithValue(err.message);
-    }
-})
-
-
-export const handleprogileslice = createAsyncThunk("auth/profile", async (_, thunkAPI) => {
-    try {
-        const response = await handleprogile();
-        return response.data.data;
-    }
-    catch (error) {
-        return thunkAPI.rejectWithValue(error.message);
-    }
-})
-
-
-
+// ------------------------- INITIAL STATE -------------------------
 const initialState = {
     auth: {
         authloading: false,
         autherror: null,
         authdata: {},
-        // isAuthenticated: false,
+        isAuthenticated: false,
     },
     authlogin: {
         logindata: {},
@@ -73,8 +86,9 @@ const initialState = {
         logedinuserloading: false,
         logiedinusererror: null,
     }
-}
+};
 
+// ------------------------- SLICE -------------------------
 const AuthSlice = createSlice({
     name: "Auth",
     initialState,
@@ -84,17 +98,15 @@ const AuthSlice = createSlice({
             state.auth.isAuthenticated = false;
             state.auth.authdata = {};
             state.authlogin.logindata = {};
-            sessionStorage.removeItem('token');
-
-            // delete cookie
+            sessionStorage.removeItem("token");
             document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
         }
-
     },
 
     extraReducers: (builder) => {
         builder
-            // sing up api 
+
+            // -------------- SIGNUP --------------
             .addCase(AuthSingup.pending, (state) => {
                 state.auth.authloading = true;
                 state.auth.autherror = null;
@@ -102,33 +114,35 @@ const AuthSlice = createSlice({
             .addCase(AuthSingup.fulfilled, (state, action) => {
                 state.auth.authloading = false;
                 state.auth.authdata = action.payload;
-                // ✅ user is now authenticated
-                state.auth.isAuthenticated = true;
+
+                // ❗ FIX: SIGNUP SHOULD NOT LOGIN USER
+                state.auth.isAuthenticated = false;
             })
             .addCase(AuthSingup.rejected, (state, action) => {
                 state.auth.authloading = false;
                 state.auth.autherror = action.payload;
             })
 
-            // login api 
+            // -------------- LOGIN --------------
             .addCase(Authlogin.pending, (state) => {
                 state.authlogin.loginloading = true;
                 state.authlogin.loginerror = null;
             })
             .addCase(Authlogin.fulfilled, (state, action) => {
                 state.authlogin.loginloading = false;
-                // is login is true 
+
+                // login success
                 state.auth.isAuthenticated = true;
                 state.authlogin.logindata = action.payload;
-                sessionStorage.setItem('token', action.payload.token);
 
+                sessionStorage.setItem("token", action.payload.token);
             })
             .addCase(Authlogin.rejected, (state, action) => {
                 state.authlogin.loginloading = false;
                 state.authlogin.loginerror = action.payload;
             })
 
-            // fetch profile data 
+            // -------------- FETCH PROFILE --------------
             .addCase(handlelogidprofiledata.pending, (state) => {
                 state.profiledata.profileloading = true;
                 state.profiledata.profileerror = null;
@@ -142,6 +156,7 @@ const AuthSlice = createSlice({
                 state.profiledata.profileerror = action.payload;
             })
 
+            // -------------- GET LOGGED IN USER --------------
             .addCase(handleprogileslice.pending, (state) => {
                 state.logedinuser.logedinuserloading = true;
                 state.logedinuser.logiedinusererror = null;
@@ -154,9 +169,9 @@ const AuthSlice = createSlice({
             .addCase(handleprogileslice.rejected, (state, action) => {
                 state.logedinuser.logedinuserloading = false;
                 state.logedinuser.logiedinusererror = action.payload;
-            })
+            });
     }
-})
+});
 
 export const { logoutUser } = AuthSlice.actions;
 export default AuthSlice.reducer;
