@@ -200,7 +200,7 @@ const SingleChatpage = () => {
             ) : "no profile available..."}
 
             {/* CHAT MESSAGES */}
-            <div className="p-3 flex flex-col gap-y-3 h-[33rem] overflow-y-auto"
+            <div className="p-3 flex flex-col gap-y-3 xl:h-[33rem] h-full overflow-y-auto"
                 style={{ scrollbarWidth: "none" }} >
 
                 {Array.isArray(message) && message.length > 0 ? (
